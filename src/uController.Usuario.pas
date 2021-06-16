@@ -40,17 +40,47 @@ end;
 
 procedure TControllerUsuario.Store(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
-  lUser: TJSONObject;
+  Body: TJSONObject;
 
 begin
-  lUser := Req.Body<TJSONObject>;
+  Body := Req.Body<TJSONObject>;
 
+  //------------------------------------------------------------------------------
+  // Valida parâmetros obrigatórios
+  //------------------------------------------------------------------------------
+  if not Assigned(Body.Values['name']) then
+  begin
+    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'O parâmetro "name" é obrigatório.'))).Status(400);
+    Exit;
+  end;
+  if not Assigned(Body.Values['email']) then
+  begin
+    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'O parâmetro "email" é obrigatório.'))).Status(400);
+    Exit;
+  end;
+
+  //------------------------------------------------------------------------------
+  // Valida duplicidades
+  //------------------------------------------------------------------------------
+  if DM.cdsUsuario.Locate('NOME', Body.Values['name'].Value, []) then
+  begin
+    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Já existe um usuário com este nome.'))).Status(400);
+    Exit;
+  end;
+  if DM.cdsUsuario.Locate('EMAIL', Body.Values['email'].Value, []) then
+  begin
+    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Já existe um usuário com este e-mail.'))).Status(400);
+    Exit;
+  end;
+
+  //------------------------------------------------------------------------------
+  // Salva
+  //------------------------------------------------------------------------------
   DM.cdsUsuario.Append;
-  DM.cdsUsuario.FieldByName('NOME').AsString := lUser.Values['name'].Value;
-  DM.cdsUsuario.FieldByName('EMAIL').AsString := lUser.Values['email'].Value;
+  DM.cdsUsuario.FieldByName('NOME').AsString := Body.Values['name'].Value;
+  DM.cdsUsuario.FieldByName('EMAIL').AsString := Body.Values['email'].Value;
   DM.cdsUsuario.FieldByName('DATE_CAD').AsDateTime := Now;
   DM.cdsUsuario.Post;
-
   Salvar;
 
   Res.Status(200);
