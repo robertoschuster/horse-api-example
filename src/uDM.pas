@@ -49,7 +49,7 @@ begin
     cdsUsuario.LoadFromFile('cdsUsuario.xml');
 
   if FileExists('cdsCliente.xml') then
-    cdsUsuario.LoadFromFile('cdsCliente.xml');
+    cdsCliente.LoadFromFile('cdsCliente.xml');
 end;
 
 procedure TDM.DataModuleDestroy(Sender: TObject);
