@@ -1,0 +1,15 @@
+{
+	"name": "horse-api-example",
+	"description": "",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {
+		"github.com/hashload/horse": "^2.0.13",
+		"github.com/hashload/horse-logger": "^2.0.2",
+		"github.com/hashload/horse-logger-provider-console": "^1.0.3",
+		"github.com/hashload/jhonson": "^1.1.1",
+		"github.com/viniciussanchez/dataset-serialize": "^v2.3.1"
+	}
+}
