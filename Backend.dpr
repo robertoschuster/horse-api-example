@@ -7,8 +7,11 @@ program Backend;
 uses
   Horse,
   Horse.Jhonson,
+  // Horse.Compression,
   Horse.Logger,
   Horse.Logger.Provider.Console,
+  Horse.Paginate,
+  Horse.HandleException,
   System.JSON,
   Windows,
   SysUtils,
@@ -51,8 +54,12 @@ end;
 procedure StartAPI;
 begin
   // Middlewares
-  THorse.Use(THorseLoggerManager.HorseCallback());
-  THorse.Use(Jhonson());
+  THorse
+    .Use(THorseLoggerManager.HorseCallback())
+    // .Use(Compression())
+    .Use(Paginate())
+    .Use(Jhonson())
+    .Use(HandleException);
 
   // Users
   THorse.Get('/users', ControllerUsuario.Index);
