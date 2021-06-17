@@ -49,29 +49,18 @@ begin
   // Valida parâmetros obrigatórios
   //------------------------------------------------------------------------------
   if not Assigned(Body.Values['name']) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'O parâmetro "name" é obrigatório.'))).Status(400);
-    Exit;
-  end;
+    raise EHorseException.Create('O parâmetro "name" é obrigatório.');
   if not Assigned(Body.Values['email']) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'O parâmetro "email" é obrigatório.'))).Status(400);
-    Exit;
-  end;
+    raise EHorseException.Create('O parâmetro "email" é obrigatório.');
 
   //------------------------------------------------------------------------------
   // Valida duplicidades
   //------------------------------------------------------------------------------
   if DM.cdsUsuario.Locate('NOME', Body.Values['name'].Value, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Já existe um usuário com este nome.'))).Status(400);
-    Exit;
-  end;
+    raise EHorseException.Create('Já existe um usuário com este nome.');
+
   if DM.cdsUsuario.Locate('EMAIL', Body.Values['email'].Value, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Já existe um usuário com este e-mail.'))).Status(400);
-    Exit;
-  end;
+    raise EHorseException.Create('Já existe um usuário com este e-mail.');
 
   //------------------------------------------------------------------------------
   // Salva
@@ -88,27 +77,26 @@ end;
 
 procedure TControllerUsuario.Update(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
-  lId: Integer;
-  lUser: TJSONObject;
+  Id: Integer;
+  Body: TJSONObject;
 begin
-  lId := Req.Params.Items['id'].ToInteger;
+  Id := Req.Params.Items['id'].ToInteger;
+  Body := Req.Body<TJSONObject>;
 
-  if not DM.cdsUsuario.Locate('ID', lId, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Usuário não encontrado'))).Status(400);
-    Exit;
-  end;
+  //------------------------------------------------------------------------------
+  // Valida
+  //------------------------------------------------------------------------------
+  if not DM.cdsUsuario.Locate('ID', Id, []) then
+    raise EHorseException.Create('Usuário não encontrado.');
 
-  lUser := Req.Body<TJSONObject>;
-
+  //------------------------------------------------------------------------------
+  // Salva
+  //------------------------------------------------------------------------------
   DM.cdsUsuario.Edit;
-
-  if Assigned(lUser.Values['name']) then
-    DM.cdsUsuario.FieldByName('NOME').AsString := lUser.Values['name'].Value;
-
-  if Assigned(lUser.Values['email']) then
-    DM.cdsUsuario.FieldByName('EMAIL').AsString := lUser.Values['email'].Value;
-
+  if Assigned(Body.Values['name']) then
+    DM.cdsUsuario.FieldByName('NOME').AsString := Body.Values['name'].Value;
+  if Assigned(Body.Values['email']) then
+    DM.cdsUsuario.FieldByName('EMAIL').AsString := Body.Values['email'].Value;
   DM.cdsUsuario.FieldByName('DATE_UPDATE').AsDateTime := Now;
   DM.cdsUsuario.Post;
 
@@ -119,16 +107,19 @@ end;
 
 procedure TControllerUsuario.Delete(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
-  lId: Integer;
+  Id: Integer;
 begin
-  lId := Req.Params.Items['id'].ToInteger;
+  Id := Req.Params.Items['id'].ToInteger;
 
-  if not DM.cdsUsuario.Locate('ID', lId, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Usuário não encontrado'))).Status(400);
-    Exit;
-  end;
+  //------------------------------------------------------------------------------
+  // Valida
+  //------------------------------------------------------------------------------
+  if not DM.cdsUsuario.Locate('ID', Id, []) then
+    raise EHorseException.Create('Usuário não encontrado.');
 
+  //------------------------------------------------------------------------------
+  // Salva
+  //------------------------------------------------------------------------------
   DM.cdsUsuario.Delete;
   Salvar;
 

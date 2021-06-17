@@ -40,21 +40,29 @@ end;
 
 procedure TControllerCliente.Store(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
-  lUser: TJSONObject;
+  Body: TJSONObject;
 
 begin
-  lUser := Req.Body<TJSONObject>;
+  Body := Req.Body<TJSONObject>;
 
-  if not DM.cdsUsuario.Locate('ID', lUser.Values['user_id'].Value.ToInteger, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Usuário não encontrado'))).Status(400);
-    Exit;
-  end;
+  //------------------------------------------------------------------------------
+  // Valida parâmetros obrigatórios
+  //------------------------------------------------------------------------------
+  if not Assigned(Body.Values['name']) then
+    raise EHorseException.Create('O parâmetro "name" é obrigatório.');
+  if not Assigned(Body.Values['user_id']) then
+    raise EHorseException.Create('O parâmetro "user_id" é obrigatório.');
+
+  //------------------------------------------------------------------------------
+  // Valida chave estrangeira
+  //------------------------------------------------------------------------------
+  if not DM.cdsUsuario.Locate('ID', Body.Values['user_id'].Value.ToInteger, []) then
+    raise EHorseException.Create('Usuário não encontrado.');
 
   DM.cdsCliente.Append;
-  DM.cdsCliente.FieldByName('NOME').AsString := lUser.Values['name'].Value;
-  DM.cdsCliente.FieldByName('USUARIO_ID').AsInteger := lUser.Values['user_id'].Value.ToInteger;
-  DM.cdsCliente.FieldByName('ENDERECO').AsString := lUser.Values['address'].Value;
+  DM.cdsCliente.FieldByName('NOME').AsString := Body.Values['name'].Value;
+  DM.cdsCliente.FieldByName('USUARIO_ID').AsInteger := Body.Values['user_id'].Value.ToInteger;
+  DM.cdsCliente.FieldByName('ENDERECO').AsString := Body.Values['address'].Value;
   DM.cdsCliente.FieldByName('DATE_CAD').AsDateTime := Now;
   DM.cdsCliente.Post;
 
@@ -65,37 +73,37 @@ end;
 
 procedure TControllerCliente.Update(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
-  lId: Integer;
-  lUser: TJSONObject;
+  Id: Integer;
+  Body: TJSONObject;
 begin
-  lId := Req.Params.Items['id'].ToInteger;
+  Id := Req.Params.Items['id'].ToInteger;
+  Body := Req.Body<TJSONObject>;
 
-  if not DM.cdsCliente.Locate('ID', lId, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Cliente não encontrado'))).Status(400);
-    Exit;
-  end;
+  //------------------------------------------------------------------------------
+  // Valida
+  //------------------------------------------------------------------------------
+  if not DM.cdsCliente.Locate('ID', Id, []) then
+    raise EHorseException.Create('Cliente não encontrado.');
 
-  lUser := Req.Body<TJSONObject>;
-
+  //------------------------------------------------------------------------------
+  // Salva
+  //------------------------------------------------------------------------------
   DM.cdsCliente.Edit;
+  if Assigned(Body.Values['name']) then
+    DM.cdsCliente.FieldByName('NOME').AsString := Body.Values['name'].Value;
 
-  if Assigned(lUser.Values['name']) then
-    DM.cdsCliente.FieldByName('NOME').AsString := lUser.Values['name'].Value;
-
-  if Assigned(lUser.Values['user_id']) then
+  if Assigned(Body.Values['user_id']) then
   begin
-    if not DM.cdsUsuario.Locate('ID', lUser.Values['user_id'].Value.ToInteger, []) then
+    if not DM.cdsUsuario.Locate('ID', Body.Values['user_id'].Value.ToInteger, []) then
     begin
       Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Usuário não encontrado'))).Status(400);
       Exit;
     end;
-
-    DM.cdsCliente.FieldByName('USUARIO_ID').AsInteger := lUser.Values['user_id'].Value.ToInteger;
+    DM.cdsCliente.FieldByName('USUARIO_ID').AsInteger := Body.Values['user_id'].Value.ToInteger;
   end;
 
-  if Assigned(lUser.Values['address']) then
-    DM.cdsCliente.FieldByName('ENDERECO').AsString := lUser.Values['address'].Value;
+  if Assigned(Body.Values['address']) then
+    DM.cdsCliente.FieldByName('ENDERECO').AsString := Body.Values['address'].Value;
 
   DM.cdsCliente.FieldByName('DATE_UPDATE').AsDateTime := Now;
   DM.cdsCliente.Post;
@@ -107,16 +115,19 @@ end;
 
 procedure TControllerCliente.Delete(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
-  lId: Integer;
+  Id: Integer;
 begin
-  lId := Req.Params.Items['id'].ToInteger;
+  Id := Req.Params.Items['id'].ToInteger;
 
-  if not DM.cdsCliente.Locate('ID', lId, []) then
-  begin
-    Res.Send(TJSONObject.Create(TJSONPair.Create('error', 'Cliente não encontrado'))).Status(400);
-    Exit;
-  end;
+  //------------------------------------------------------------------------------
+  // Valida
+  //------------------------------------------------------------------------------
+  if not DM.cdsCliente.Locate('ID', Id, []) then
+    raise EHorseException.Create('Cliente não encontrado.');
 
+  //------------------------------------------------------------------------------
+  // Salva
+  //------------------------------------------------------------------------------
   DM.cdsCliente.Delete;
   Salvar;
 
